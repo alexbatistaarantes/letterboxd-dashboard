@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Letterboxd Dashboard</title>
+
+</head>
+<body>
+    
+    <header>
+        <h1> Letterboxd Dashboard</h1>
+    </header>
+
+    <main>
+        
+        <div>
+            <h2>Input data</h2>
+            
+            <div>
+                <label for="data-input">Select Letterboxd data file (.zip)</label>
+                <input type="file" name="data-input" id="data-input">
+            </div>
+
+            <button id="create-dashboard-button">Create Dashboard</button>
+        </div>
+
+        <button id="show-files-button">Files</button>
+
+    </main>
+
+    <script src="js/lib/zip.min.js"></script>
+    <script src="js/handle-zip.js"></script>
+</body>
+</html>
