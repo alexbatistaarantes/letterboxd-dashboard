@@ -19,19 +19,25 @@
         <div>
             <h2>Input data</h2>
             
+            <ol id="instructions">
+                <li>Login to your Letterboxd account</li>
+                <li>Go to <a href="https://letterboxd.com/settings/data/" target="_blank"><i>Import & Export</i></a> page in Settings</li>
+                <li>Click on <i>Export your data</i></li>
+                <li>The <i>.zip</i> filled downloaded, you upload bellow</li>
+            </ol>
+
             <div>
-                <label for="data-input">Select Letterboxd data file (.zip)</label>
+                <label for="data-input"><b>Select your Letterboxd data file (.zip)</b></label>
                 <input type="file" name="data-input" id="data-input">
             </div>
 
             <button id="create-dashboard-button">Create Dashboard</button>
         </div>
 
-        <button id="show-files-button">Files</button>
-
     </main>
 
     <script src="js/lib/zip.min.js"></script>
+    <script src="js/lib/danfojs-bundle.min.js"></script>
     <script src="js/handle-zip.js"></script>
 </body>
 </html>
