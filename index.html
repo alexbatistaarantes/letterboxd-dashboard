@@ -34,7 +34,7 @@
                 <input type="file" name="data-input" id="data-input">
             </div>
 
-            <button id="create-dashboard-button">Create Dashboard</button>
+            <button id="create-dashboard-button" class="hidden">Create Dashboard</button>
         </div>
         
         <hr>
@@ -51,8 +51,8 @@
                 <p></p>
             </div>
 
-            <div id="movies-watched-by-watched-year">
-                <h3>Movies watched by watched year</h3>
+            <div id="movies-watched-by-year">
+                <h3>Movies watched by year</h3>
                 <table>
                     <thead>
                         <tr> <th>Year</th> <th>Quantity</th> </tr>
@@ -61,7 +61,7 @@
                 </table>
             </div>
 
-            <div id="movies-watched-by-year">
+            <div id="movies-watched-by-release-year">
                 <h3>Movies watched by release year</h3>
                 <table>
                     <thead>
@@ -74,6 +74,15 @@
         </div>
 
     </main>
+
+    <noscript>
+        <style>
+            main {
+                display: none;
+            }
+        </style>
+        <p>Javascript must be enabled for this website to work.</p>
+    </noscript>
 
     <script src="js/lib/zip.min.js"></script>
     <script src="js/lib/danfojs-bundle.min.js"></script>
