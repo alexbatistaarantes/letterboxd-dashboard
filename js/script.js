@@ -8,7 +8,7 @@ dataInput.addEventListener('change', () => unhideButtonCreateDashboard() );
 
 let dataframes = {};
 let statistics = {};
-const currentYear = 2023;
+const currentYear = new Date().getFullYear();
 
 /* Triggers reading files and creating dashboard */
 buttonCreateDashboard.addEventListener('click', async () => {
