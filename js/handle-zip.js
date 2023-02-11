@@ -2,22 +2,43 @@ const dataInput = document.querySelector("#data-input");
 const buttonCreateDashboard = document.querySelector("#create-dashboard-button");
 const filesList = document.querySelector("#files-list");
 
-let datasets = {
-    watched: null
-}
+let dataframes = {};
+let statistics = {};
 
-/* Create Dashboard */
+/* Triggers reading files and creating dashboard */
 buttonCreateDashboard.addEventListener('click', async () => {
     await loadDataFiles();
-    console.log(datasets);
+    getStatistics();
+    writeDashboard();
 });
+
+/* Write to dashboard */
+function writeDashboard(){
+    document.querySelector("div#movies-watched > p").textContent = statistics.moviesWatched;
+}
+
+/* Get Statistics */
+function getStatistics(){
+    statistics['moviesWatched'] = dataframes.watched.Name.count();
+    statistics['moviesWatchedByYear'] = dataframes.watched.Year.valueCounts().sortValues({ascending: false});
+}
+
+/* Write a dataframe to a table */
+function writeDFToTable(df, table){
+    ;
+}
+
+/* Write a Series to a table */
+function writeSeriesToTable(series, table){
+    ;
+}
 
 /* Get movies watched */
 async function loadTable(dataFile, key){
     let blobWriter = new zip.BlobWriter();
     dfd.readCSV(await dataFile.getData(blobWriter))
     .then((df) => {
-        datasets[key] = df
+        dataframes[key] = df;
     })
     //const reader = new FileReader();
     //let textWriter = new zip.TextWriter();
