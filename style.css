@@ -1,3 +1,29 @@
 .hidden {
 	display: none;
 }
+
+div#dashboard div {
+	max-height: 200px;
+	overflow: auto;
+
+	margin: 10px;
+	padding: 10px;
+
+	box-shadow: 1px 2px 5px black;
+}
+
+/* ##################### */
+/* TABLES */
+
+div#dashboard table,
+div#dashboard th, 
+div#dashboard tr,
+div#dashboard td {
+	border: 1px solid black;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+/* ##################### */
