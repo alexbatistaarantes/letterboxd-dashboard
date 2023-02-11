@@ -7,14 +7,15 @@
 
     <title>Letterboxd Dashboard</title>
 
-	<link href="styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     
     <header>
         <h1> Letterboxd Dashboard</h1>
-        <hr>
     </header>
+    
+    <hr>
 
     <main>
         
@@ -25,7 +26,7 @@
                 <li>Login to your Letterboxd account</li>
                 <li>Go to <a href="https://letterboxd.com/settings/data/" target="_blank"><i>Import & Export</i></a> page in Settings</li>
                 <li>Click on <i>Export your data</i></li>
-                <li>Upload the downloaded <i>.zip</i> fille bellow</li>
+                <li>Upload the downloaded <i>.zip</i> file bellow</li>
             </ol>
 
             <div>
@@ -48,6 +49,21 @@
             <div id="count-watched-this-year">
                 <h3>Movies watched this year</h3>
                 <p></p>
+            </div>
+
+            <div id="movies-watched-by-year">
+                <h3>Movies watched by release year</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>Quantity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+                    </tbody>
+                </table>
             </div>
 
         </div>
