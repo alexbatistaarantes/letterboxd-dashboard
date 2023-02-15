@@ -31,7 +31,7 @@
 
             <div>
                 <label for="data-input"><b>Select your Letterboxd data file (.zip)</b></label>
-                <input type="file" name="data-input" id="data-input">
+                <input type="file" name="data-input" id="data-input" accept=".zip">
             </div>
 
             <button id="create-dashboard-button" class="hidden">Create Dashboard</button>
@@ -69,6 +69,11 @@
                     </thead>
                     <tbody></tbody>
                 </table>
+            </div>
+            
+            <div class="plot" id="movies-watched-by-month-last-year">
+                <h3>Movies watched last year by month</h3>
+                <div id="movies-watched-by-month-last-year-timeline"></div>
             </div>
 
         </div>

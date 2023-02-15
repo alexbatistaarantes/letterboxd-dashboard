@@ -1,34 +1,42 @@
+const currentYear = new Date().getFullYear();
+
 const dataInput = document.querySelector("#data-input");
-const filesList = document.querySelector("#files-list");
 
 const buttonCreateDashboard = document.querySelector("#create-dashboard-button");
 const unhideButtonCreateDashboard = () => dataInput.value && buttonCreateDashboard.classList.remove('hidden');
 window.addEventListener('load', () => unhideButtonCreateDashboard() );
 dataInput.addEventListener('change', () => unhideButtonCreateDashboard() );
 
-let dataframes = {};
-let statistics = {};
-const currentYear = new Date().getFullYear();
+let dataframes;
+let statistics;
 
 /* Triggers reading files and creating dashboard */
-buttonCreateDashboard.addEventListener('click', async () => {
-    await loadDataFiles();
+buttonCreateDashboard.addEventListener('click', createDashboard);
+
+async function createDashboard() {
     
+    dataframes = {};
+    statistics = {};
+
+    await getData();
+    
+    preprocessData();
+
     getStatistics();
     
-    writeDashboard();
+    writeToDashboard();
 
     /* Remove .hidden from dashboard */
     document.querySelector("div#dashboard").classList.remove('hidden');
-});
+};
 
 /* Write to dashboard */
-function writeDashboard(){
+function writeToDashboard(){
     /* Movies Watched */
-    writeContentToElement(document.querySelector("div#movies-watched > p"), statistics.moviesWatched);
+    writeContentToElement(statistics.moviesWatched, document.querySelector("div#movies-watched > p"));
 
     /* Movies watched this year */
-    writeContentToElement(document.querySelector("div#movies-watched-this-year > p"), statistics['moviesWatchedThisYear']);
+    writeContentToElement(statistics['moviesWatchedThisYear'], document.querySelector("div#movies-watched-this-year > p"));
 
     /* Movies watched by watched year */
     writeDFToTable(statistics['moviesWatchedByYear'], document.querySelector("div#movies-watched-by-year > table"));
@@ -43,41 +51,39 @@ function getStatistics(){
     statistics['moviesWatched'] = dataframes.watched.Name.count();
     
     /* Movies watched this year */
-    statistics['moviesWatchedThisYear'] = dataframes.diary.loc({rows: dataframes.diary['Watched Date'].str.startsWith(`${currentYear}`)}).shape[0];
+    statistics['moviesWatchedThisYear'] = dataframes.diary.loc({rows: dataframes.diary['Watched Year'].eq(currentYear.toString())}).shape[0];
     
     /* Movies by year watched */
-    const diaryEntryYears = dataframes.diary["Watched Date"].str.slice(0,4);
-    const moviesWatchedByYear_Series = diaryEntryYears.valueCounts();
-    statistics['moviesWatchedByYear'] = new dfd.DataFrame({'Year':  moviesWatchedByYear_Series.index, 'Quantity': moviesWatchedByYear_Series.values}).sortValues('Year', {ascending: false});
+    const moviesWatchedByYear = dataframes.diary["Watched Year"].valueCounts();
+    statistics['moviesWatchedByYear'] = new dfd.DataFrame({'Year':  moviesWatchedByYear.index, 'Quantity': moviesWatchedByYear.values}).sortValues('Year', {ascending: false});
     
-    /* Movies by Year */
+    /* Movies by Release Year */
     statistics['moviesWatchedByReleaseYear'] = dataframes.watched.Year.valueCounts().sortValues({ascending: false});
+
+    /* Movies by Last Year Months (plot) */
+    statistics['moviesWatchedByMonthYear'] = dataframes.diary.loc({rows: dataframes.diary['Watched Year'].eq((currentYear-1).toString())})['Watched Month'].valueCounts();
+    statistics['moviesWatchedByMonthYear'].plot("movies-watched-by-month-last-year-timeline").bar();
 }
 
-/* Load table to Dataframe */
-async function loadTable(dataFile, key){
-    let blobWriter = new zip.BlobWriter();
-    dfd.readCSV(await dataFile.getData(blobWriter))
-    .then((df) => {
-        dataframes[key] = df;
-    })
-    //const reader = new FileReader();
-    //let textWriter = new zip.TextWriter();
-    //const content = await dataFile.getData(textWriter);
+function preprocessData() {
+    /* Create separate watched Month and Year columns in diary */
+    dataframes.diary.addColumn(
+        'Watched Year',
+        dataframes.diary['Watched Date'].str.slice(0, 4),
+        {inplace: true}
+    );
+    dataframes.diary.addColumn(
+        'Watched Month',
+        dataframes.diary['Watched Date'].str.slice(5, 7),
+        {inplace: true}
+    );
 }
 
-/* Get data files from zip */
-async function loadDataFiles() {
-    const zipFile = new zip.ZipReader(new zip.BlobReader( dataInput.files[0] ));
-    const filesList = await zipFile.getEntries();
-    
-    let files = {};
-    const watchedFile = filesList.filter((file) => file.filename === "watched.csv")[0];
-    await loadTable(watchedFile, 'watched');
-    const ratings = filesList.filter((file) => file.filename === "ratings.csv")[0];
-    await loadTable(ratings, 'ratings');
-    const diary = filesList.filter((file) => file.filename === "diary.csv")[0];
-    await loadTable(diary, 'diary');
-    const watchlist = filesList.filter((file) => file.filename === "watchlist.csv")[0];
-    await loadTable(watchlist, 'watchlist');
+async function getData() {
+    const files = await getFilesFromZip(dataInput);
+
+    dataframes['watched'] = await getDataframeFromCSV(files.filter((file) => file.filename === "watched.csv")[0]);
+    dataframes['diary'] = await getDataframeFromCSV(files.filter((file) => file.filename === "diary.csv")[0]);
+    dataframes['ratings'] = await getDataframeFromCSV(files.filter((file) => file.filename === "ratings.csv")[0]);
+    dataframes['watchlist'] = await getDataframeFromCSV(files.filter((file) => file.filename === "watchlist.csv")[0]);
 }

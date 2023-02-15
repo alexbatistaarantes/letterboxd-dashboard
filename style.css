@@ -2,7 +2,7 @@
 	display: none;
 }
 
-div#dashboard div {
+div#dashboard > div {
 	max-height: 200px;
 	overflow: auto;
 
@@ -24,6 +24,13 @@ div#dashboard td {
 
 table {
 	border-collapse: collapse;
+}
+
+/* ##################### */
+/* PLOT */
+
+div#dashboard > div.plot {
+	max-height: 500px;
 }
 
 /* ##################### */
