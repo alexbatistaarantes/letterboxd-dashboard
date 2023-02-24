@@ -35,7 +35,7 @@ class IndicatorElement extends DashboardElement {
     
         if(this.observation){
             const observation = document.createElement('p');
-            observation.classList.push("observation");
+            observation.classList.add("observation");
             observation.textContent = this.observation;
             div.appendChild(observation);
         }
@@ -58,7 +58,7 @@ class TableElement extends DashboardElement {
         
         div.id = this.id;
         title.textContent = this.title;
-        
+
         /* Inserting Header */
         this.data.columns.forEach(column => {
             const th= document.createElement('th');
@@ -85,6 +85,13 @@ class TableElement extends DashboardElement {
 
         div.appendChild(title);
         div.appendChild(table);
+
+        if(this.observation){
+            const observation = document.createElement('p');
+            observation.classList.add("observation");
+            observation.textContent = this.observation;
+            div.appendChild(observation);
+        }
 
         return div;
     }
@@ -113,6 +120,7 @@ class PlotElement extends DashboardElement {
         const plot = document.createElement('div');
     
         div.id = this.id;
+        div.classList.add('plot');
         title.textContent = this.title;
         plot.id = `${this.id}_plot`;
     
@@ -121,7 +129,7 @@ class PlotElement extends DashboardElement {
     
         if(this.observation){
             const observation = document.createElement('p');
-            observation.classList.push("observation");
+            observation.classList.add("observation");
             observation.textContent = this.observation;
             div.appendChild(observation);
         }
@@ -131,20 +139,22 @@ class PlotElement extends DashboardElement {
 }
 
 class LetterboxdDashboard {
-    constructor(div, watched, diary, ratings, watchlist){
+    constructor(div, watched, diary, ratings, genres){
         this.div = div;
 
         this.watched = watched;
         this.diary = diary;
         this.ratings = ratings;
-        this.watchlist = watchlist;
+
+        this.genres = genres;
 
         this.elements = [];
 
         this.preprocessData();
     }
 
-    preprocessData(){
+    preprocessData(imdb){
+        
         /* Create separate watched Month and Year columns in diary */
         this.diary.addColumn(
             'Watched Year',
@@ -156,6 +166,10 @@ class LetterboxdDashboard {
             this.diary['Watched Date'].str.slice(5, 7),
             {inplace: true}
         );
+        
+        /* Add runtime and IMDB ID to Letterboxdd data */
+        //this.watched = dfd.merge(({"left": this.watched, "right": imdb, "on": ["Name", "Year"], how: "left"}));
+        //this.diary = dfd.merge(({"left": this.diary, "right": imdb, "on": ["Name", "Year"], how: "left"}));
     }
 
     /* Get elements to display in the dashboard */
@@ -185,11 +199,17 @@ class LetterboxdDashboard {
         });
         this.elements.push( new TableElement("Movies watched by release year", moviesWatchedByReleaseYear, 'movies-watched-by-release-year') );
 
+        /* Movies Watched by Genre */
+        const moviesWatchedByGenre_series = this.genres.Genre.valueCounts().sortValues({ascending: false});
+        const moviesWatchedByGenre = new dfd.DataFrame({
+            'Genre': moviesWatchedByGenre_series.index,
+            'Quantity': moviesWatchedByGenre_series.values
+        });
+        this.elements.push( new TableElement("Movies watched by genre", moviesWatchedByGenre, 'movies-watched-by-genre', "A movie usually have more than one gender") );
+
         /* Movies by Last Year Months (plot) */
         const moviesWatchedByMonthLastYear = this.diary.loc({rows: this.diary['Watched Year'].eq((currentYear-1).toString())})['Watched Month'].valueCounts();
         this.elements.push( new PlotElement("Movies watched by month last year", moviesWatchedByMonthLastYear, 'movies-watched-by-month-last-year', "bar") );
-
-        //this.statistics['moviesRuntime'] = dfd.merge(({"left": this.watched, "right": imdb, "on": ["Name", "Year"], how: "inner"}));
     }
 
     /* Write elements to the dashboard div */
@@ -209,10 +229,15 @@ class LetterboxdDashboard {
 buttonCreateDashboard.addEventListener('click', createDashboard);
 
 let lbDashboard;
+let imdb;
+let imdb_movie_genres;
 
 async function createDashboard() {
 
-    const dataframes = await getData();
+    buttonCreateDashboard.disabled = true;
+
+    let dataframes = await getData();
+    dataframes = await mergeImdbData(dataframes);
     
     const dashboardDiv = document.querySelector("div#dashboard");
 
@@ -221,10 +246,12 @@ async function createDashboard() {
         dataframes.watched,
         dataframes.diary,
         dataframes.ratings,
-        dataframes.watchlist
+        dataframes.genres
     );
     lbDashboard.getElements();
     lbDashboard.writeElements();
+    
+    buttonCreateDashboard.disabled = false;
 
     /* Remove .hidden from dashboard */
     dashboardDiv.classList.remove('hidden');
@@ -237,11 +264,24 @@ async function getData() {
     dataframes['watched'] = await getDataframeFromCSV(files.filter((file) => file.filename === "watched.csv")[0]);
     dataframes['diary'] = await getDataframeFromCSV(files.filter((file) => file.filename === "diary.csv")[0]);
     dataframes['ratings'] = await getDataframeFromCSV(files.filter((file) => file.filename === "ratings.csv")[0]);
-    dataframes['watchlist'] = await getDataframeFromCSV(files.filter((file) => file.filename === "watchlist.csv")[0]);
     return dataframes;
 }
 
-async function loadImdb() {
-    imdb = await dfd.readCSV("https://raw.githubusercontent.com/alexbatistaarantes/letterboxd-dashboard/main/imdb.tsv", {delimiter: "\t"}).then(df => {return df;});
-    imdb.rename({ "primaryTitle": "Name", "startYear": "Year" }, { inplace: true })
+async function mergeImdbData(dataframes) {
+    const siteUrl = window.location.href;
+    
+    /* Get info for movies in IMDB */
+    let imdb = await dfd.readCSV(`${siteUrl}imdb.tsv`, {delimiter: "\t"}).then(df => {return df;});
+    imdb.rename({ "tconst": "Id", "primaryTitle": "Name", "startYear": "Year" }, { inplace: true });
+    /* Genres of the movies */
+    const movie_genres = await dfd.readCSV(`${siteUrl}imdb_movies_genres.csv`, {delimiter: ","}).then(df => {return df;});
+    movie_genres.rename({ "tconst": "Id", "genres": "Genre" }, { inplace: true });
+
+    /* Adding more informations about the movies */
+    /* TODO: new column with title in lower case, and maybe without non-letter and non-digits, to better match IMDB titles */
+    dataframes.watched = dfd.merge({left: dataframes.watched, right: imdb, on: ['Name', 'Year'], how: 'left'});
+    dataframes.diary.addColumn('Id', dfd.merge({left: dataframes.diary, right: dataframes.watched, on: ['Name', 'Year'], how: 'left'}).Id, {inplace: true});
+    dataframes.genres = dfd.merge({left: dataframes.watched, right: movie_genres, on: ['Id'], how: 'inner'}).loc({columns: ['Id', 'Genre']});
+
+    return dataframes;
 }
