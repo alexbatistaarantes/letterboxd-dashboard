@@ -8,6 +8,8 @@ const unhideButtonCreateDashboard = () => dataInput.value && buttonCreateDashboa
 window.addEventListener('load', () => unhideButtonCreateDashboard() );
 dataInput.addEventListener('change', () => unhideButtonCreateDashboard() );
 
+const loadingMessages = document.querySelector("#loading-messages");
+
 /* Represents an element in the dashboard */
 class DashboardElement {
     constructor(title, data, id, observation){
@@ -15,6 +17,23 @@ class DashboardElement {
         this.data = data;
         this.id = id;
         this.observation = observation;
+    }
+
+    getObservation(){
+        const observation_div = document.createElement('div');
+        observation_div.classList.add("observation");
+        if(Array.isArray(this.observation)){
+            for(let i = 0; i < this.observation.length; i++){
+                const message = document.createElement('p');
+                message.textContent = `${'*'.repeat(i+1)} ${this.observation[i]}`;
+                observation_div.appendChild(message);
+            }
+        }else{
+            const message = document.createElement('p');
+            message.textContent = `* ${this.observation}`;
+            observation_div.appendChild(message);
+        }
+        return observation_div;
     }
 }
 
@@ -35,10 +54,8 @@ class IndicatorElement extends DashboardElement {
         div.appendChild(value);
     
         if(this.observation){
-            const observation = document.createElement('p');
-            observation.classList.add("observation");
-            observation.textContent = this.observation;
-            div.appendChild(observation);
+            const div_observation = this.getObservation();
+            div.appendChild(div_observation);
         }
     
         return div;
@@ -88,10 +105,8 @@ class TableElement extends DashboardElement {
         div.appendChild(table);
 
         if(this.observation){
-            const observation = document.createElement('p');
-            observation.classList.add("observation");
-            observation.textContent = this.observation;
-            div.appendChild(observation);
+            const div_observation = this.getObservation();
+            div.appendChild(div_observation);
         }
 
         return div;
@@ -131,12 +146,10 @@ class PlotElement extends DashboardElement {
         div.appendChild(plot);
     
         if(this.observation){
-            const observation = document.createElement('p');
-            observation.classList.add("observation");
-            observation.textContent = this.observation;
-            div.appendChild(observation);
+            const div_observation = this.getObservation();
+            div.appendChild(div_observation);
         }
-    
+
         return div;
     }
 }
@@ -211,7 +224,11 @@ class LetterboxdDashboard {
         // Show as table
         //this.elements.push( new TableElement("Movies watched by genre", moviesWatchedByGenre, 'movies-watched-by-genre', "A movie usually have more than one genre") );
         // Show as bar plot
-        const plot_watched_by_genre = new PlotElement("Watched by Genre", moviesWatchedByGenre_series, 'movies-watched-by-genre', 'bar', "A movie usually have more than one genre", {bargap: 0.1});
+        const plot_watched_by_genre = new PlotElement("Watched by Genre", moviesWatchedByGenre_series, 'movies-watched-by-genre',
+            'bar', 
+            "A movie usually have more than one genre",
+            {bargap: 0.1}
+        );
         this.elements.push(plot_watched_by_genre);
 
         /* Movies by Last Year Months (plot) */
@@ -219,7 +236,8 @@ class LetterboxdDashboard {
         // Changing month number to month name
         const month_name_index = moviesWatchedByMonthLastYear.index.map((month_num) => {return months[month_num-1]});
         moviesWatchedByMonthLastYear.setIndex(month_name_index, {inplace: true});
-        this.elements.push( new PlotElement("Movies watched by month last year", moviesWatchedByMonthLastYear, 'movies-watched-by-month-last-year', "bar", undefined,
+        this.elements.push( new PlotElement("Movies watched by month last year", moviesWatchedByMonthLastYear, 'movies-watched-by-month-last-year',
+            "bar", undefined,
             {
                 // Sorting the bars to months order
                 xaxis: {categoryarray: months, categoryorder: "array"}
@@ -249,8 +267,11 @@ async function createDashboard() {
 
     buttonCreateDashboard.disabled = true;
 
+    loadingMessages.textContent = "Loading Letterboxd data...";
     let dataframes = await getData();
+    loadingMessages.textContent = "Loading IMDB data (this may take a bit longer)..."
     dataframes = await mergeImdbData(dataframes);
+    loadingMessages.textContent = "";
     
     const dashboardDiv = document.querySelector("div#dashboard");
     if(dashboardDiv.childNodes.length > 0){

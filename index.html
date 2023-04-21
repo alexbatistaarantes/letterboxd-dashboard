@@ -28,13 +28,19 @@
                 <li>Click on <i>Export your data</i></li>
                 <li>Upload the downloaded <i>.zip</i> file bellow</li>
             </ol>
-
+            
             <div>
                 <label for="data-input"><b>Select your Letterboxd data file (.zip)</b></label>
                 <input type="file" name="data-input" id="data-input" accept=".zip">
             </div>
 
+            <div class="observation">
+                <p>* Data regarding movie genre may be wrong since it tries to merge Letterboxd data with an IMDB database</p>
+            </div>
+
             <button id="create-dashboard-button" class="hidden">Create Dashboard</button>
+
+            <p id="loading-messages"></p>
         </div>
         
         <hr>
