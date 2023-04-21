@@ -1,4 +1,5 @@
 const currentYear = new Date().getFullYear();
+const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 const dataInput = document.querySelector("#data-input");
 
@@ -9,7 +10,7 @@ dataInput.addEventListener('change', () => unhideButtonCreateDashboard() );
 
 /* Represents an element in the dashboard */
 class DashboardElement {
-    constructor(title, data, id, observation=null){
+    constructor(title, data, id, observation){
         this.title = title;
         this.data = data;
         this.id = id;
@@ -100,15 +101,17 @@ class TableElement extends DashboardElement {
 /* Represents a plot in the dashboard */
 class PlotElement extends DashboardElement {
 
-    constructor(title, data, id, type, observation=null){
+    constructor(title, data, id, type, observation, layout={}, options={}){
         super(title, data, id, observation);
         this.type = type;
+        this.layout = layout;
+        this.options = options;
     }
 
     renderPlot(){
         switch(this.type.toLowerCase()){
             case 'bar':
-                this.data.plot(`${this.id}_plot`).bar();
+                this.data.plot(`${this.id}_plot`).bar({layout: this.layout, options: this.options});
                 break;
         }
     }
@@ -205,11 +208,23 @@ class LetterboxdDashboard {
             'Genre': moviesWatchedByGenre_series.index,
             'Quantity': moviesWatchedByGenre_series.values
         });
-        this.elements.push( new TableElement("Movies watched by genre", moviesWatchedByGenre, 'movies-watched-by-genre', "A movie usually have more than one gender") );
+        // Show as table
+        //this.elements.push( new TableElement("Movies watched by genre", moviesWatchedByGenre, 'movies-watched-by-genre', "A movie usually have more than one genre") );
+        // Show as bar plot
+        const plot_watched_by_genre = new PlotElement("Watched by Genre", moviesWatchedByGenre_series, 'movies-watched-by-genre', 'bar', "A movie usually have more than one genre", {bargap: 0.1});
+        this.elements.push(plot_watched_by_genre);
 
         /* Movies by Last Year Months (plot) */
         const moviesWatchedByMonthLastYear = this.diary.loc({rows: this.diary['Watched Year'].eq((currentYear-1).toString())})['Watched Month'].valueCounts();
-        this.elements.push( new PlotElement("Movies watched by month last year", moviesWatchedByMonthLastYear, 'movies-watched-by-month-last-year', "bar") );
+        // Changing month number to month name
+        const month_name_index = moviesWatchedByMonthLastYear.index.map((month_num) => {return months[month_num-1]});
+        moviesWatchedByMonthLastYear.setIndex(month_name_index, {inplace: true});
+        this.elements.push( new PlotElement("Movies watched by month last year", moviesWatchedByMonthLastYear, 'movies-watched-by-month-last-year', "bar", undefined,
+            {
+                // Sorting the bars to months order
+                xaxis: {categoryarray: months, categoryorder: "array"}
+            })
+        );
     }
 
     /* Write elements to the dashboard div */
@@ -229,8 +244,6 @@ class LetterboxdDashboard {
 buttonCreateDashboard.addEventListener('click', createDashboard);
 
 let lbDashboard;
-let imdb;
-let imdb_movie_genres;
 
 async function createDashboard() {
 
@@ -240,6 +253,9 @@ async function createDashboard() {
     dataframes = await mergeImdbData(dataframes);
     
     const dashboardDiv = document.querySelector("div#dashboard");
+    if(dashboardDiv.childNodes.length > 0){
+        dashboardDiv.innerHTML = "";
+    }
 
     lbDashboard = new LetterboxdDashboard(
         dashboardDiv,
@@ -271,7 +287,7 @@ async function mergeImdbData(dataframes) {
     const siteUrl = window.location.href;
     
     /* Get info for movies in IMDB */
-    let imdb = await dfd.readCSV(`${siteUrl}imdb.tsv`, {delimiter: "\t"}).then(df => {return df;});
+    const imdb = await dfd.readCSV(`${siteUrl}imdb.tsv`, {delimiter: "\t"}).then(df => {return df;});
     imdb.rename({ "tconst": "Id", "primaryTitle": "Name", "startYear": "Year" }, { inplace: true });
     /* Genres of the movies */
     const movie_genres = await dfd.readCSV(`${siteUrl}imdb_movies_genres.csv`, {delimiter: ","}).then(df => {return df;});
