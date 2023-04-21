@@ -128,6 +128,9 @@ class PlotElement extends DashboardElement {
             case 'bar':
                 this.data.plot(`${this.id}_plot`).bar({layout: this.layout, options: this.options});
                 break;
+            case 'table':
+                this.data.plot(`${this.id}_plot`).table({layout: this.layout, options: this.options});
+                break;
         }
     }
 
@@ -139,10 +142,12 @@ class PlotElement extends DashboardElement {
     
         div.id = this.id;
         div.classList.add('plot');
-        title.textContent = this.title;
+        if(this.title){
+            title.textContent = this.title;
+            div.appendChild(title);
+        }
         plot.id = `${this.id}_plot`;
     
-        div.appendChild(title);
         div.appendChild(plot);
     
         if(this.observation){
@@ -224,10 +229,13 @@ class LetterboxdDashboard {
         // Show as table
         //this.elements.push( new TableElement("Movies watched by genre", moviesWatchedByGenre, 'movies-watched-by-genre', "A movie usually have more than one genre") );
         // Show as bar plot
-        const plot_watched_by_genre = new PlotElement("Watched by Genre", moviesWatchedByGenre_series, 'movies-watched-by-genre',
+        const plot_watched_by_genre = new PlotElement("", moviesWatchedByGenre_series, 'movies-watched-by-genre',
             'bar', 
             "A movie usually have more than one genre",
-            {bargap: 0.1}
+            {
+                title: {text:"Watched by Genre"},
+                bargap: 0.1
+            }
         );
         this.elements.push(plot_watched_by_genre);
 
@@ -236,9 +244,10 @@ class LetterboxdDashboard {
         // Changing month number to month name
         const month_name_index = moviesWatchedByMonthLastYear.index.map((month_num) => {return months[month_num-1]});
         moviesWatchedByMonthLastYear.setIndex(month_name_index, {inplace: true});
-        this.elements.push( new PlotElement("Movies watched by month last year", moviesWatchedByMonthLastYear, 'movies-watched-by-month-last-year',
+        this.elements.push( new PlotElement("", moviesWatchedByMonthLastYear, 'movies-watched-by-month-last-year',
             "bar", undefined,
             {
+                title: {text:"Watched by month last year"},
                 // Sorting the bars to months order
                 xaxis: {categoryarray: months, categoryorder: "array"}
             })
